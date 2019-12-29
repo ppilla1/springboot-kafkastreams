@@ -47,3 +47,4 @@ Die Hard|{"title":"Die Hard","year":1988,"cast":["Bruce Willis","Alan Rickman","
 Toy Story|{"title":"Toy Story","year":1995,"cast":["Tim Allen","Tom Hanks","(voices)"],"genres":["Animated"]}
 Jurassic Park|{"title":"Jurassic Park","year":1993,"cast":["Sam Neill","Laura Dern","Jeff Goldblum","Richard Attenborough"],"genres":["Adventure"]}
 The Lord of the Rings: The Fellowship of the Ring|{"title":"The Lord of the Rings: The Fellowship of the Ring","year":2001,"cast":["Elijah Wood","Ian McKellen","Liv Tyler","Sean Astin","Viggo Mortensen","Orlando Bloom","Sean Bean","Hugo Weaving","Ian Holm"],"genres":["Fantasy"]}
+Inception|{"title":"Inception","year":2010,"cast":["Leonardo DiCaprio","Ken Watanabe","Joseph Gordon-Levitt", "Marion Cotillard", "Ellen Page", "Tom Hardy", "Cillian Murphy", "Tom Berenger", "Michael Caine"],"genres":["Science Fiction"]}
