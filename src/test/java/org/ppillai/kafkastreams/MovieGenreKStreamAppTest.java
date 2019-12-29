@@ -45,20 +45,20 @@ public class MovieGenreKStreamAppTest {
         /* Construct Kafka Stream processing topology*/
         StreamsBuilder streamsBuilder = new StreamsBuilder();
 
-        /** 1. Stream processing node for reading from Kafka topic **/
+        /** 1. Stream processing node for reading Movie json payload from Kafka topic **/
         KStream<String, Movie> sourceNode = streamsBuilder.stream(SOURCE_TOPIC, Consumed.with(stringSerde, movieSerde));
 
-        /** 2. Stream processing node for transforming source stream to uppercase **/
+        /** 2. Stream processing node for transforming source stream to MovieGenre payload **/
         KStream<String, MovieGenere> movieGenereNode = sourceNode.mapValues(this::transformToMovieGenre);
 
-        /* Create instance for Serializer/De-serializer for reading source
+        /* Create instance for Serializer/De-serializer for writing to sink
         Kafka topics
         */
         JsonSerializer<MovieGenere> movieGenreJsonSerializer = new JsonSerializer<>();
         JsonDeserializer<MovieGenere> movieGenreJsonDeserializer = new JsonDeserializer<>(MovieGenere.class);
         Serde<MovieGenere> movieGenreSerde = Serdes.serdeFrom(movieGenreJsonSerializer, movieGenreJsonDeserializer);
 
-        /** 3. Stream processing node for writing uppercase transformed data to target Kafka topic **/
+        /** 3. Stream processing node for writing MovieGenre data to target Kafka topic **/
         movieGenereNode.to(SINK_TOPIC, Produced.with(stringSerde, movieGenreSerde));
 
         /* Start Kafka stream */
