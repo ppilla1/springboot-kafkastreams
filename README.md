@@ -40,3 +40,10 @@ kafka-topics.bat --list --zookeeper localhost:2181
 
 #10# Delete kafka topics
 kafka-topics.bat --zookeeper localhost:2181 --delete --topic <topic-name>
+
+### Sample Test <key>|<value> pair for json for Kafka Movie payload  ###
+The Matrix|{"title":"The Matrix","year":1999,"cast":["Keanu Reeves","Laurence Fishburne","Carrie-Anne Moss","Hugo Weaving","Joe Pantoliano"],"genres":["Science Fiction"]}
+Die Hard|{"title":"Die Hard","year":1988,"cast":["Bruce Willis","Alan Rickman","Bonnie Bedelia","William Atherton","Paul Gleason","Reginald VelJohnson","Alexander Godunov"],"genres":["Action"]}
+Toy Story|{"title":"Toy Story","year":1995,"cast":["Tim Allen","Tom Hanks","(voices)"],"genres":["Animated"]}
+Jurassic Park|{"title":"Jurassic Park","year":1993,"cast":["Sam Neill","Laura Dern","Jeff Goldblum","Richard Attenborough"],"genres":["Adventure"]}
+The Lord of the Rings: The Fellowship of the Ring|{"title":"The Lord of the Rings: The Fellowship of the Ring","year":2001,"cast":["Elijah Wood","Ian McKellen","Liv Tyler","Sean Astin","Viggo Mortensen","Orlando Bloom","Sean Bean","Hugo Weaving","Ian Holm"],"genres":["Fantasy"]}
