@@ -49,12 +49,7 @@ public class MovieGenreKStreamAppTest {
         KStream<String, Movie> sourceNode = streamsBuilder.stream(SOURCE_TOPIC, Consumed.with(stringSerde, movieSerde));
 
         /** 2. Stream processing node for transforming source stream to uppercase **/
-        KStream<String, MovieGenere> movieGenereNode = sourceNode.mapValues((Movie value) ->  {
-            MovieGenere movieGenere = new MovieGenere();
-            movieGenere.setTitle(value.getTitle());
-            movieGenere.setGenres(value.getGenres());
-            return  movieGenere;
-        });
+        KStream<String, MovieGenere> movieGenereNode = sourceNode.mapValues(this::transformToMovieGenre);
 
         /* Create instance for Serializer/De-serializer for reading source
         Kafka topics
@@ -73,5 +68,12 @@ public class MovieGenreKStreamAppTest {
         Thread.sleep(35000);
         log.info("Starting MovieGenre streaming app");
         kafkaStreams.close();
+    }
+
+    public MovieGenere transformToMovieGenre(Movie movie){
+        MovieGenere movieGenere = new MovieGenere();
+        movieGenere.setTitle(movie.getTitle());
+        movieGenere.setGenres(movie.getGenres());
+        return  movieGenere;
     }
 }
