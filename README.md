@@ -1,10 +1,8 @@
-# springboot-kafkastreams
-SpringBoot with Kafka Streams
-
 #1# Start Zookeeper
 zookeeper-server-start.bat config\zookeeper.properties
 
 #2# Start Kafka Broker server
+### Set property delete.topic.enable=true in server.properties , to enable topic deletion
 kafka-server-start.bat config\server.properties
 
 #3# Create topics 
@@ -21,8 +19,15 @@ kafka-console-producer.bat --broker-list localhost:9092 --topic <streams-file-in
 >kafka data processing
 >kafka streams course
 
+#5# Publish messages to topics with key 
+kafka-console-producer.bat --broker-list localhost:9092 --property parse.key=true --property key.separator="|" --topic <streams-file-input>
+
+>1|kafka streams udemy
+>2|kafka data processing
+>3|kafka streams course
+
 #6# Display messages from topic
-kafka-console-consumer.bat --bootstrap-server localhost:9092 --from-beginning --topic <streams-file-input> 
+kafka-console-consumer.bat --bootstrap-server localhost:9092 --from-beginning --property print.key=true --property key.separator="|" --topic <streams-file-input> 
 
 #7# Run example Kafka Streams app
 kafka-run-class.bat org.apache.kafka.streams.examples.wordcount.WordCountDemo
@@ -32,3 +37,6 @@ kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic <streams-wo
 
 #9# View Kafka Streams app result along with listing of temporary topics
 kafka-topics.bat --list --zookeeper localhost:2181
+
+#10# Delete kafka topics
+kafka-topics.bat --zookeeper localhost:2181 --delete --topic <topic-name>
