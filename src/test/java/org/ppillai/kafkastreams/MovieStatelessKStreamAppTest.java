@@ -85,14 +85,20 @@ public class MovieStatelessKStreamAppTest {
         leonardoMoviesNode.to(LEONARDO_MOVIES_TOPIC, Produced.with(stringSerde, movieSerde));
 
         /** 2.3.1 Processing node for writing before 1995 movies with keys as year of release **/
-        moviesSplitByReleaseYear[BEFORE1995MOVIES]
-                .selectKey(this::setReleaseYearAsKey)
-                .to(BEFORE_1995_MOVIES_TOPIC, Produced.with(Serdes.Integer(), movieSerde));
+        KStream<Integer, Movie> moviesBefore1995Node = moviesSplitByReleaseYear[BEFORE1995MOVIES]
+                                                        .selectKey(this::setReleaseYearAsKey);
+
+        moviesBefore1995Node.peek((key, movie) -> log.info("[MoviesBefore1995] key={}, value={}", key, movie));
+
+        moviesBefore1995Node.to(BEFORE_1995_MOVIES_TOPIC, Produced.with(Serdes.Integer(), movieSerde));
 
         /** 2.3.2 Processing node for writing after 1995 movies with keys as year of release **/
-        moviesSplitByReleaseYear[AFTER1995MOVIES]
-                .selectKey(this::setReleaseYearAsKey)
-                .to(AFTER_1995_MOVIES_TOPIC, Produced.with(Serdes.Integer(), movieSerde));
+        KStream<Integer, Movie> moviesAfter1995Node = moviesSplitByReleaseYear[AFTER1995MOVIES]
+                                                        .selectKey(this::setReleaseYearAsKey);
+
+        moviesAfter1995Node.peek((key, movie) -> log.info("[MoviesAfter1995] key={}, value={}", key, movie));
+
+        moviesAfter1995Node.to(AFTER_1995_MOVIES_TOPIC, Produced.with(Serdes.Integer(), movieSerde));
 
         /* Start Kafka stream */
         KafkaStreams kafkaStreams = new KafkaStreams(streamsBuilder.build(), props);
