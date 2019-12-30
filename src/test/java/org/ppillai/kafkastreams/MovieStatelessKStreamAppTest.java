@@ -8,6 +8,7 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.KeyValueMapper;
 import org.apache.kafka.streams.kstream.Produced;
 import org.junit.jupiter.api.Test;
 import org.ppillai.kafkastreams.model.Movie;
@@ -18,10 +19,11 @@ import org.ppillai.kafkastreams.serde.JsonSerializer;
 import java.util.Properties;
 
 @Slf4j
-public class MovieGenreKStreamAppTest {
+public class MovieStatelessKStreamAppTest {
 
     public static final String SOURCE_TOPIC = "src-topic";
     public static final String SINK_TOPIC = "out-topic";
+    public static final String LEONARDO_MOVIES_TOPIC = "leonardo-movies-topic";
 
     @Test
     public void test_yelling_app_KStream() throws InterruptedException {
@@ -49,9 +51,16 @@ public class MovieGenreKStreamAppTest {
         KStream<String, Movie> sourceNode = streamsBuilder.stream(SOURCE_TOPIC, Consumed.with(stringSerde, movieSerde));
         sourceNode.peek((key, movie) -> log.info("[Movie] key={}, value={}", key, movie));
 
-        /** 2. Stream processing node for transforming source stream to MovieGenre payload **/
+        /** 2.1 Stream processing node for transforming source stream to MovieGenre payload **/
         KStream<String, MovieGenere> movieGenereNode = sourceNode.mapValues(this::transformToMovieGenre);
+
+        sourceNode.filter((key, movie) -> movie.getYear() < 2000).selectKey((key, movie) -> movie.getYear());
         movieGenereNode.peek((key, moviegenere) -> log.info("[MovieGenere] key={}, value={}", key, moviegenere));
+
+        /** 2.2 Processing node for filtering Leonardo movies with setting key as name of primary actor **/
+        KStream<String, Movie> leonardoMoviesNode = sourceNode
+                                                        .filter(this::filterLeonardoMovies)
+                                                        .selectKey(this::setKeyAsPrimaryCastMemberName);
 
         /* Create instance for Serializer/De-serializer for writing to sink
         Kafka topics
@@ -60,9 +69,12 @@ public class MovieGenreKStreamAppTest {
         JsonDeserializer<MovieGenere> movieGenreJsonDeserializer = new JsonDeserializer<>(MovieGenere.class);
         Serde<MovieGenere> movieGenreSerde = Serdes.serdeFrom(movieGenreJsonSerializer, movieGenreJsonDeserializer);
 
-        /** 3. Stream processing node for writing MovieGenre data to target Kafka topic **/
+        /** 2.1.1. Stream processing node for writing MovieGenre data to target Kafka topic **/
 
         movieGenereNode.to(SINK_TOPIC, Produced.with(stringSerde, movieGenreSerde));
+
+        /** 2.2.1 Processing node for writing movies with Leonardo as primary cast **/
+        leonardoMoviesNode.to(LEONARDO_MOVIES_TOPIC, Produced.with(stringSerde, movieSerde));
 
         /* Start Kafka stream */
         KafkaStreams kafkaStreams = new KafkaStreams(streamsBuilder.build(), props);
@@ -78,5 +90,25 @@ public class MovieGenreKStreamAppTest {
         movieGenere.setTitle(movie.getTitle());
         movieGenere.setGenres(movie.getGenres());
         return  movieGenere;
+    }
+
+    public boolean filterLeonardoMovies(String key, Movie movie){
+        boolean status = false;
+
+        if (null != movie.getCast() && !movie.getCast().isEmpty()) {
+            status = movie.getCast().get(0).equalsIgnoreCase("Leonardo DiCaprio");
+        }
+
+        return status;
+    }
+
+    public String setKeyAsPrimaryCastMemberName(String key, Movie movie){
+        String newKey = null;
+
+        if (null != movie.getCast() && !movie.getCast().isEmpty()){
+            newKey = movie.getCast().get(0);
+        }
+
+        return newKey;
     }
 }
