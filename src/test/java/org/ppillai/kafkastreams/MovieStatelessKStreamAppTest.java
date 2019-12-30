@@ -6,10 +6,7 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.kstream.Consumed;
-import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KeyValueMapper;
-import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.kstream.*;
 import org.junit.jupiter.api.Test;
 import org.ppillai.kafkastreams.model.Movie;
 import org.ppillai.kafkastreams.model.MovieGenere;
@@ -24,6 +21,8 @@ public class MovieStatelessKStreamAppTest {
     public static final String SOURCE_TOPIC = "src-topic";
     public static final String SINK_TOPIC = "out-topic";
     public static final String LEONARDO_MOVIES_TOPIC = "leonardo-movies-topic";
+    public static final String BEFORE_1995_MOVIES_TOPIC = "movies-before1995-topic";
+    public static final String AFTER_1995_MOVIES_TOPIC = "movies-after1995-topic";
 
     @Test
     public void test_yelling_app_KStream() throws InterruptedException {
@@ -62,6 +61,15 @@ public class MovieStatelessKStreamAppTest {
                                                         .filter(this::filterLeonardoMovies)
                                                         .selectKey(this::setKeyAsPrimaryCastMemberName);
 
+        /** 2.3 Processing node for spliting movies stream into before/after 1995 release years **/
+        Predicate<String, Movie> before1995Movies = (key, movie) -> movie.getYear() < 1995;
+        Predicate<String, Movie> after1995Movies = (key, movie) -> movie.getYear() >= 1995;
+
+        KStream<String, Movie>[] moviesSplitByReleaseYear = sourceNode.branch(before1995Movies, after1995Movies);
+
+        int BEFORE1995MOVIES = 0;
+        int AFTER1995MOVIES = 1;
+
         /* Create instance for Serializer/De-serializer for writing to sink
         Kafka topics
         */
@@ -76,6 +84,16 @@ public class MovieStatelessKStreamAppTest {
         /** 2.2.1 Processing node for writing movies with Leonardo as primary cast **/
         leonardoMoviesNode.to(LEONARDO_MOVIES_TOPIC, Produced.with(stringSerde, movieSerde));
 
+        /** 2.3.1 Processing node for writing before 1995 movies with keys as year of release **/
+        moviesSplitByReleaseYear[BEFORE1995MOVIES]
+                .selectKey(this::setReleaseYearAsKey)
+                .to(BEFORE_1995_MOVIES_TOPIC, Produced.with(Serdes.Integer(), movieSerde));
+
+        /** 2.3.2 Processing node for writing after 1995 movies with keys as year of release **/
+        moviesSplitByReleaseYear[AFTER1995MOVIES]
+                .selectKey(this::setReleaseYearAsKey)
+                .to(AFTER_1995_MOVIES_TOPIC, Produced.with(Serdes.Integer(), movieSerde));
+
         /* Start Kafka stream */
         KafkaStreams kafkaStreams = new KafkaStreams(streamsBuilder.build(), props);
 
@@ -83,6 +101,10 @@ public class MovieStatelessKStreamAppTest {
         Thread.sleep(35000);
         log.info("Starting MovieGenre streaming app");
         kafkaStreams.close();
+    }
+
+    private Integer setReleaseYearAsKey(String s, Movie movie) {
+        return movie.getYear();
     }
 
     public MovieGenere transformToMovieGenre(Movie movie){
